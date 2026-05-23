@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanya Turath AI</title>
+    <meta name="description" content="Tanya jawab keislaman berbasis kitab turath klasik.">
+    <!-- Hubungkan ke manifest PWA -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Warna tema untuk address bar di browser HP -->
+    <meta name="theme-color" content="#065f46">
+    <!-- Tailwind CSS untuk styling cepat -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-4 sm:p-6 font-sans">
+
+    <!-- Container Utama -->
+    <main class="w-full max-w-lg bg-white shadow-xl shadow-slate-200/50 rounded-3xl p-6 sm:p-8 mt-4 sm:mt-10 border border-slate-100">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-emerald-800 mb-2">Tanya Turath AI</h1>
+            <p class="text-sm text-slate-500">Konsultasi agama dari rujukan kitab klasik (turath.io)</p>
+        </header>
+        
+        <!-- Area Input -->
+        <div class="mb-6">
+            <label for="userInput" class="sr-only">Pertanyaan Anda</label>
+            <textarea id="userInput" 
+                class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-slate-700" 
+                rows="4" 
+                placeholder="Tulis pertanyaan keagamaan Anda di sini..."></textarea>
+        </div>
+        
+        <!-- Tombol Kirim -->
+        <button id="sendBtn" 
+            class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3.5 rounded-2xl transition-colors flex justify-center items-center gap-2 shadow-md shadow-emerald-900/10">
+            <span>Cari Jawaban</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+        </button>
+
+        <!-- Area Hasil / Loading -->
+        <div id="responseContainer" class="mt-8 hidden">
+            <div class="h-px w-full bg-slate-100 mb-6"></div>
+            <h2 class="text-sm font-semibold text-emerald-800 mb-3 uppercase tracking-wider">Jawaban:</h2>
+            <div id="responseArea" class="p-5 bg-emerald-50/50 rounded-2xl text-slate-700 leading-relaxed text-sm border border-emerald-100 min-h-[100px]">
+                <!-- Teks jawaban akan dirender di sini -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Pendaftaran Service Worker & Logika Fetch -->
+    <script>
+        // 1. Daftarkan Service Worker untuk fitur PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker terdaftar!', reg))
+                    .catch(err => console.error('Pendaftaran Service Worker gagal:', err));
+            });
+        }
+
+        // 2. Logika Pengiriman Pertanyaan
+        const btn = document.getElementById('sendBtn');
+        const outputContainer = document.getElementById('responseContainer');
+        const outputText = document.getElementById('responseArea');
+
+        btn.addEventListener('click', async () => {
+            const query = document.getElementById('userInput').value.trim();
+            if (!query) return;
+
+            // Tampilkan state loading
+            outputContainer.classList.remove('hidden');
+            outputText.innerHTML = '<span class="text-emerald-600 animate-pulse">Sedang menelusuri kitab turath...</span>';
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                // TODO (Tahap 4): Ganti URL di bawah ini dengan URL Webhook dari Make.com
+                const WEBHOOK_URL = 'https://hook.us1.make.com/CONTOH_WEBHOOK_ANDA'; 
+                
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: query })
+                });
+
+                if (!response.ok) throw new Error('Gagal menghubungi server');
+
+                const data = await response.json();
+                
+                // Asumsi respons dari webhook memiliki properti "answer"
+                outputText.innerHTML = data.answer || "Tidak ada jawaban yang dikembalikan.";
+                
+            } catch (error) {
+                outputText.innerHTML = '<span class="text-red-600">Terjadi kesalahan saat menyambungkan ke sistem AI. Pastikan webhook sudah aktif.</span>';
+                console.error(error);
+            } finally {
+                // Kembalikan tombol ke state semula
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        });
+    </script>
+</body>
+</html>
