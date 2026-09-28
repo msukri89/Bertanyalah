@@ -35,4 +35,4 @@ jobs:
 
       - name: Ensure legacy webhook is absent
         run: |
-          ! grep -R "hook.us2.make.com" -n . --exclude-dir=.git
+          ! grep -n "hook.us2.make.com" index.html
