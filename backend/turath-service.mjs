@@ -111,8 +111,10 @@ export async function searchTurath(queries, { maxPages = 5 } = {}) {
     if (!page || typeof page !== "object") continue;
 
     const text = page.text ?? page.content ?? page.body ?? page.page_text ?? page.arabic_text ?? "";
-    const link = typeof page.link === "string" && /^https?:\/\//i.test(page.link) ? page.link : null;
-    if (!text || !link) continue;
+    const link = typeof page.link === "string" && /^https?:\/\//i.test(page.link)
+      ? page.link
+      : `https://app.turath.io/book/${candidate.bookId}?page=${candidate.pageId}`;
+    if (!text) continue;
 
     let bookMeta = null;
     try {
