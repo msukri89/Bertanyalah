@@ -1,0 +1,22 @@
+name: Test Turath Search
+
+on:
+  push:
+    branches:
+      - dev/turath-backend-foundation
+  workflow_dispatch:
+
+jobs:
+  turath-search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test real Turath search
+        run: node backend/test-turath-search.mjs
