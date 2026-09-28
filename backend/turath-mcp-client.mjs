@@ -17,7 +17,7 @@ export async function mcpRequest(endpoint, body, {
 
     if (sessionId) headers["Mcp-Session-Id"] = sessionId;
 
-    const response = await fetch(endpoint, {
+    let response;\n    try {\n      response = await fetch(endpoint, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
