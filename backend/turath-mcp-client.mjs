@@ -17,12 +17,23 @@ export async function mcpRequest(endpoint, body, {
 
     if (sessionId) headers["Mcp-Session-Id"] = sessionId;
 
-    let response;\n    try {\n      response = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
+    let response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        status: 0,
+        contentType: null,
+        sessionId: null,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
 
     const text = await response.text();
 
