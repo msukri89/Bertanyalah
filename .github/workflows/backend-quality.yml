@@ -28,6 +28,7 @@ jobs:
           node --check backend/test-turath-search.mjs
           node --check api/health.mjs
           node --check api/ask.mjs
+          node backend/test-backend.mjs
 
       - name: Import check
         run: node -e "import('./backend/turath-service.mjs').then(()=>console.log('turath-service import: PASS'))"
