@@ -2,6 +2,7 @@ import { searchTurath } from "../backend/turath-service.mjs";
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
@@ -13,36 +14,56 @@ async function geminiJson(input, schema) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY belum dikonfigurasi.");
 
-  const response = await fetch(
-    `${GEMINI_URL}/${encodeURIComponent(MODEL)}:generateContent?key=${encodeURIComponent(key)}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: input }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: schema
+  const models = [...new Set([MODEL, FALLBACK_MODEL].filter(Boolean))];
+  let lastError = null;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await fetch(
+          GEMINI_URL + "/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(key),
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: input }] }],
+              generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+              }
+            })
+          }
+        );
+
+        const data = await response.json();
+        if (!response.ok) {
+          const message = data?.error?.message || `Gemini HTTP ${response.status}`;
+          const retryable = [429, 500, 502, 503, 504].includes(response.status);
+          if (retryable && attempt === 0) {
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            continue;
+          }
+          throw new Error(message);
         }
-      })
+
+        const outputText = data?.candidates?.[0]?.content?.parts
+          ?.map(part => part?.text || "")
+          .join("")
+          .trim();
+
+        if (!outputText) throw new Error("Gemini tidak mengembalikan output terstruktur.");
+        return JSON.parse(outputText);
+      } catch (error) {
+        lastError = error;
+        if (attempt === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1200));
+          continue;
+        }
+      }
     }
-  );
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data?.error?.message || `Gemini HTTP ${response.status}`);
   }
 
-  const outputText = data?.candidates?.[0]?.content?.parts
-    ?.map(part => part?.text || "")
-    .join("")
-    .trim();
-
-  if (!outputText) {
-    throw new Error("Gemini tidak mengembalikan output terstruktur.");
-  }
-
-  return JSON.parse(outputText);
+  throw lastError || new Error("Gemini gagal memproses permintaan.");
 }
 
 export default async function handler(req, res) {
