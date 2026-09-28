@@ -86,8 +86,7 @@ export default async function handler(req, res) {
           maxItems: 4
         }
       },
-      required: ["queries"],
-      additionalProperties: false
+      required: ["queries"]
     });
 
     const queries = planned.queries
@@ -148,8 +147,7 @@ export default async function handler(req, res) {
           maxItems: 8
         }
       },
-      required: ["answer", "usedSourceIds"],
-      additionalProperties: false
+      required: ["answer", "usedSourceIds"]
     });
 
     const usedIds = generated.usedSourceIds
