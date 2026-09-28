@@ -1,7 +1,7 @@
 import { searchTurath } from "../backend/turath-service.mjs";
 
-const OPENAI_URL = "https://api.openai.com/v1/responses";
-const MODEL = process.env.OPENAI_MODEL || "gpt-5.6-luna";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
@@ -9,40 +9,40 @@ function cors(res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-async function openAIJson(input, schema) {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("OPENAI_API_KEY belum dikonfigurasi.");
+async function geminiJson(input, schema) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("GEMINI_API_KEY belum dikonfigurasi.");
 
-  const response = await fetch(OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${key}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      input,
-      text: {
-        format: {
-          type: "json_schema",
-          name: schema.name,
-          strict: true,
-          schema: schema.schema
+  const response = await fetch(
+    `${GEMINI_URL}/${encodeURIComponent(MODEL)}:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: input }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: schema
         }
-      }
-    })
-  });
+      })
+    }
+  );
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.error?.message || `OpenAI HTTP ${response.status}`);
+    throw new Error(data?.error?.message || `Gemini HTTP ${response.status}`);
   }
 
-  if (typeof data.output_text !== "string" || !data.output_text.trim()) {
-    throw new Error("OpenAI tidak mengembalikan output terstruktur.");
+  const outputText = data?.candidates?.[0]?.content?.parts
+    ?.map(part => part?.text || "")
+    .join("")
+    .trim();
+
+  if (!outputText) {
+    throw new Error("Gemini tidak mengembalikan output terstruktur.");
   }
 
-  return JSON.parse(data.output_text);
+  return JSON.parse(outputText);
 }
 
 export default async function handler(req, res) {
@@ -73,21 +73,18 @@ export default async function handler(req, res) {
       `Pertanyaan: ${question}`
     ].join("\n");
 
-    const planned = await openAIJson(plannerPrompt, {
-      name: "turath_query_plan",
-      schema: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          queries: {
-            type: "array",
-            items: { type: "string" },
-            minItems: 1,
-            maxItems: 4
-          }
-        },
-        required: ["queries"]
-      }
+    const planned = await geminiJson(plannerPrompt, {
+      type: "object",
+      properties: {
+        queries: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: 4
+        }
+      },
+      required: ["queries"],
+      additionalProperties: false
     });
 
     const queries = planned.queries
@@ -136,21 +133,18 @@ export default async function handler(req, res) {
       evidence
     ].join("\n");
 
-    const generated = await openAIJson(answerPrompt, {
-      name: "bertanyalah_answer",
-      schema: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          answer: { type: "string" },
-          usedSourceIds: {
-            type: "array",
-            items: { type: "string" },
-            maxItems: 8
-          }
-        },
-        required: ["answer", "usedSourceIds"]
-      }
+    const generated = await geminiJson(answerPrompt, {
+      type: "object",
+      properties: {
+        answer: { type: "string" },
+        usedSourceIds: {
+          type: "array",
+          items: { type: "string" },
+          maxItems: 8
+        }
+      },
+      required: ["answer", "usedSourceIds"],
+      additionalProperties: false
     });
 
     const usedIds = generated.usedSourceIds
