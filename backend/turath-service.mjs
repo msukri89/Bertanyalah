@@ -30,9 +30,15 @@ async function callTool(name, args, sessionId) {
     timeoutMs: 30000
   });
 
-  if (!response.ok) {\n    const detail = response.error || `HTTP ${response.status}`;\n    throw new Error(`Turath connection failed: ${detail}`);\n  }
+  if (!response.ok) {
+    const detail = response.error || `HTTP ${response.status}`;
+    throw new Error(`Turath connection failed: ${detail}`);
+  }
   if (response.data?.error) throw new Error(response.data.error.message || "Turath MCP protocol error");
-  if (response.data?.result?.isError) {\n    const message = (response.data.result.content || []).find(x => x?.type === "text")?.text || "Turath tool error";\n    throw new Error(message);\n  }\n  return unwrap(response.data);
+  if (response.data?.result?.isError) {
+    const message = (response.data.result.content || []).find(x => x?.type === "text")?.text || "Turath tool error";
+    throw new Error(message);
+  }\n  return unwrap(response.data);
 }
 
 async function openSession() {
