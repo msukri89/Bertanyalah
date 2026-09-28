@@ -9,7 +9,7 @@ function cors(res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-async function openAI(input) {
+async function openAI(input, schema) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error("OPENAI_API_KEY belum dikonfigurasi.");
 
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       `Pertanyaan: ${question}`
     ].join("\n");
 
-    const planned = parseJson(await openAI(plannerPrompt));
+    const planned = await openAI(plannerPrompt, {\n      name: "turath_query_plan",\n      schema: {\n        type: "object",\n        additionalProperties: false,\n        properties: {\n          queries: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4 }\n        },\n        required: ["queries"]\n      }\n    });
     const queries = Array.isArray(planned.queries)
       ? planned.queries.filter(x => typeof x === "string" && x.trim()).slice(0, 4)
       : [];
@@ -108,7 +108,7 @@ export default async function handler(req, res) {
       evidence
     ].join("\n");
 
-    const generated = parseJson(await openAI(answerPrompt));
+    const generated = await openAI(answerPrompt, {\n      name: "bertanyalah_answer",\n      schema: {\n        type: "object",\n        additionalProperties: false,\n        properties: {\n          answer: { type: "string" },\n          usedSourceIds: { type: "array", items: { type: "string" }, maxItems: 8 }\n        },\n        required: ["answer", "usedSourceIds"]\n      }\n    });
     const usedIds = Array.isArray(generated.usedSourceIds) ? generated.usedSourceIds : [];
     const usedSources = sources.filter(s => usedIds.includes(s.id));
 
