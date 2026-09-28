@@ -32,12 +32,14 @@ async function callTool(name, args, sessionId) {
 
   if (!response.ok) {
     const detail = response.error || `HTTP ${response.status}`;
-    throw new Error(`Turath connection failed: ${detail}`);
+    throw new Error(`Turath tool ${name} gagal: ${detail}`);
   }
-  if (response.data?.error) throw new Error(response.data.error.message || "Turath MCP protocol error");
+  if (response.data?.error) {
+    throw new Error(`Turath tool ${name} error: ${response.data.error.message || "MCP protocol error"}`);
+  }
   if (response.data?.result?.isError) {
     const message = (response.data.result.content || []).find(x => x?.type === "text")?.text || "Turath tool error";
-    throw new Error(message);
+    throw new Error(`Turath tool ${name} error: ${message}`);
   }
   return unwrap(response.data);
 }
@@ -54,7 +56,12 @@ async function openSession() {
     }
   }, { protocolVersion: PROTOCOL, timeoutMs: 30000 });
 
-  if (!init.ok || init.data?.error) throw new Error("Gagal initialize Turath MCP.");
+  if (!init.ok) {
+    throw new Error(`Turath initialize gagal: ${init.error || `HTTP ${init.status}`}`);
+  }
+  if (init.data?.error) {
+    throw new Error(`Turath initialize error: ${init.data.error.message || "MCP protocol error"}`);
+  }
   const sessionId = init.sessionId || null;
 
   await mcpRequest(ENDPOINT, {
