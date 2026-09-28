@@ -20,4 +20,4 @@ jobs:
           node-version: 20
 
       - name: Test Turath MCP
-        run: npm run test:turath
+        run: node backend/test-turath.mjs
