@@ -122,20 +122,18 @@ export default async function handler(req, res) {
     }
 
     stage = "Turath mencari dan mengambil sumber";
-    let sources = await searchTurath(queries);
+    const fallbackQueries = [
+      "بيع لحم الأضحية",
+      "بيع جلد الأضحية",
+      "بيع الأضحية",
+      "جلد الأضحية"
+    ];
 
-    // Fallback query set for common qurban-meat/skin wording.
-    // This keeps retrieval resilient when Gemini chooses a query phrase
-    // that Turath's search index does not match well.
-    if (!sources.length) {
-      const fallbackQueries = [
-        "بيع لحم الأضحية",
-        "بيع جلد الأضحية",
-        "بيع الأضحية",
-        "جلد الأضحية"
-      ];
-      sources = await searchTurath(fallbackQueries);
-    }
+    // Always include a small deterministic Turath query set.
+    // This prevents a weak Gemini-generated query from masking
+    // known-good Turath search terms.
+    const retrievalQueries = [...new Set([...queries, ...fallbackQueries])].slice(0, 8);
+    const sources = await searchTurath(retrievalQueries);
 
     if (!sources.length) {
       return res.status(200).json({
