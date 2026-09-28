@@ -1,7 +1,7 @@
 import { searchTurath } from "../backend/turath-service.mjs";
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
