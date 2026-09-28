@@ -149,4 +149,20 @@ const bookPayload = extractToolResult(bookResponse.data);
 console.log("get_book: PASS");
 console.log("Book payload keys:", bookPayload && typeof bookPayload === "object" ? Object.keys(bookPayload) : []);
 
+
+const pageLink = pagePayload.link ?? null;
+if (!pageLink || typeof pageLink !== "string" || !/^https?:\/\//i.test(pageLink)) {
+  fail("get_page tidak memberikan link HTTP(S) yang valid.", pagePayload);
+}
+console.log("Source link:", pageLink);
+
+if (!bookPayload || typeof bookPayload !== "object") {
+  fail("get_book payload tidak valid.", bookPayload);
+}
+const bookData = bookPayload.data;
+if (!bookData || typeof bookData !== "object") {
+  fail("get_book tidak memberikan data metadata buku.", bookPayload);
+}
+console.log("Book metadata sample:", JSON.stringify(bookData, null, 2).slice(0, 3000));
+
 console.log("\nEVIDENCE PIPELINE: PASS");
