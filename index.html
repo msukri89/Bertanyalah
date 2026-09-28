@@ -1,109 +1,139 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tanya Turath AI</title>
-    <meta name="description" content="Tanya jawab keislaman berbasis kitab turath klasik.">
-    <!-- Hubungkan ke manifest PWA -->
-    <link rel="manifest" href="manifest.json">
-    <!-- Warna tema untuk address bar di browser HP -->
-    <meta name="theme-color" content="#065f46">
-    <!-- Tailwind CSS untuk styling cepat -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BERTANYALAH — Tanya Fiqih, Temukan Rujukannya</title>
+  <meta name="description" content="Pencarian jawaban fiqih berbasis rujukan kitab Turath.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#065f46">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col items-center p-4 sm:p-6 font-sans">
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-4 sm:p-6 font-sans text-slate-800">
+  <main class="w-full max-w-2xl bg-white shadow-xl shadow-slate-200/50 rounded-3xl p-6 sm:p-8 mt-4 sm:mt-10 border border-slate-100">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-emerald-800 mb-2">BERTANYALAH</h1>
+      <p class="text-sm text-slate-500">Tanya fiqih, temukan rujukannya dari kitab Turath.</p>
+    </header>
 
-    <!-- Container Utama -->
-    <main class="w-full max-w-lg bg-white shadow-xl shadow-slate-200/50 rounded-3xl p-6 sm:p-8 mt-4 sm:mt-10 border border-slate-100">
-        
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-emerald-800 mb-2">Tanya Turath AI</h1>
-            <p class="text-sm text-slate-500">Konsultasi agama dari rujukan kitab klasik (turath.io)</p>
-        </header>
-        
-        <!-- Area Input -->
-        <div class="mb-6">
-            <label for="userInput" class="sr-only">Pertanyaan Anda</label>
-            <textarea id="userInput" 
-                class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-slate-700" 
-                rows="4" 
-                placeholder="Tulis pertanyaan keagamaan Anda di sini..."></textarea>
-        </div>
-        
-        <!-- Tombol Kirim -->
-        <button id="sendBtn" 
-            class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3.5 rounded-2xl transition-colors flex justify-center items-center gap-2 shadow-md shadow-emerald-900/10">
-            <span>Cari Jawaban</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-            </svg>
-        </button>
+    <label for="userInput" class="block text-sm font-semibold text-slate-700 mb-2">Pertanyaan Anda</label>
+    <textarea id="userInput"
+      class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
+      rows="5"
+      maxlength="2000"
+      placeholder="Contoh: Bagaimana hukum menjual kulit hewan qurban menurut 4 madzhab?"></textarea>
 
-        <!-- Area Hasil / Loading -->
-        <div id="responseContainer" class="mt-8 hidden">
-            <div class="h-px w-full bg-slate-100 mb-6"></div>
-            <h2 class="text-sm font-semibold text-emerald-800 mb-3 uppercase tracking-wider">Jawaban:</h2>
-            <div id="responseArea" class="p-5 bg-emerald-50/50 rounded-2xl text-slate-700 leading-relaxed text-sm border border-emerald-100 min-h-[100px]">
-                <!-- Teks jawaban akan dirender di sini -->
-            </div>
-        </div>
+    <button id="sendBtn"
+      class="mt-4 w-full bg-emerald-700 hover:bg-emerald-800 disabled:bg-emerald-300 text-white font-semibold py-3.5 rounded-2xl transition-colors flex justify-center items-center gap-2 shadow-md shadow-emerald-900/10">
+      <span id="sendLabel">Telusuri Turath</span>
+    </button>
 
-    </main>
+    <section id="responseContainer" class="mt-8 hidden" aria-live="polite">
+      <div class="h-px w-full bg-slate-100 mb-6"></div>
+      <h2 class="text-sm font-semibold text-emerald-800 mb-3 uppercase tracking-wider">Jawaban</h2>
+      <div id="responseArea" class="p-5 bg-emerald-50/50 rounded-2xl text-slate-700 leading-relaxed text-sm border border-emerald-100 whitespace-pre-wrap"></div>
 
-    <!-- Pendaftaran Service Worker & Logika Fetch -->
-    <script>
-        // 1. Daftarkan Service Worker untuk fitur PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('Service Worker terdaftar!', reg))
-                    .catch(err => console.error('Pendaftaran Service Worker gagal:', err));
-            });
+      <div id="sourcesSection" class="mt-6 hidden">
+        <h3 class="text-sm font-semibold text-slate-700 mb-3">Rujukan Turath</h3>
+        <div id="sourcesArea" class="space-y-3"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(console.error);
+      });
+    }
+
+    const btn = document.getElementById("sendBtn");
+    const label = document.getElementById("sendLabel");
+    const input = document.getElementById("userInput");
+    const outputContainer = document.getElementById("responseContainer");
+    const outputText = document.getElementById("responseArea");
+    const sourcesSection = document.getElementById("sourcesSection");
+    const sourcesArea = document.getElementById("sourcesArea");
+
+    function renderSources(sources) {
+      sourcesArea.replaceChildren();
+      if (!Array.isArray(sources) || !sources.length) {
+        sourcesSection.classList.add("hidden");
+        return;
+      }
+
+      for (const source of sources) {
+        const card = document.createElement("div");
+        card.className = "p-4 bg-white rounded-2xl border border-slate-200";
+
+        const title = document.createElement("div");
+        title.className = "font-semibold text-slate-800";
+        title.textContent = source.book || "Kitab Turath";
+
+        const meta = document.createElement("div");
+        meta.className = "text-xs text-slate-500 mt-1";
+        meta.textContent =
+          (source.author || "Penulis tidak diketahui") +
+          " • Jilid " + (source.volume || "-") +
+          " • Hal. " + (source.page || "-");
+
+        card.append(title, meta);
+
+        if (source.link) {
+          const link = document.createElement("a");
+          link.href = source.link;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.className = "inline-block mt-2 text-sm text-emerald-700 font-medium hover:underline";
+          link.textContent = "Buka sumber Turath →";
+          card.appendChild(link);
         }
 
-        // 2. Logika Pengiriman Pertanyaan
-        const btn = document.getElementById('sendBtn');
-        const outputContainer = document.getElementById('responseContainer');
-        const outputText = document.getElementById('responseArea');
+        sourcesArea.appendChild(card);
+      }
 
-        btn.addEventListener('click', async () => {
-            const query = document.getElementById('userInput').value.trim();
-            if (!query) return;
+      sourcesSection.classList.remove("hidden");
+    }
 
-            // Tampilkan state loading
-            outputContainer.classList.remove('hidden');
-            outputText.innerHTML = '<span class="text-emerald-600 animate-pulse">Sedang menelusuri kitab turath...</span>';
-            btn.disabled = true;
-            btn.classList.add('opacity-75', 'cursor-not-allowed');
+    btn.addEventListener("click", async () => {
+      const question = input.value.trim();
+      if (!question) {
+        input.focus();
+        return;
+      }
 
-            try {
-                // TODO (Tahap 4): Ganti URL di bawah ini dengan URL Webhook dari Make.com
-                const WEBHOOK_URL = 'https://hook.us2.make.com/4mb7oxm60nigngi131a14979gkg3ekuj'; 
-                
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: query })
-                });
+      outputContainer.classList.remove("hidden");
+      outputText.textContent = "Sedang menelusuri kitab Turath…";
+      renderSources([]);
+      btn.disabled = true;
+      label.textContent = "Menelusuri…";
 
-                if (!response.ok) throw new Error('Gagal menghubungi server');
-
-                const data = await response.json();
-                
-                // Asumsi respons dari webhook memiliki properti "answer"
-                outputText.innerHTML = data.answer || "Tidak ada jawaban yang dikembalikan.";
-                
-            } catch (error) {
-                outputText.innerHTML = '<span class="text-red-600">Terjadi kesalahan saat menyambungkan ke sistem AI. Pastikan webhook sudah aktif.</span>';
-                console.error(error);
-            } finally {
-                // Kembalikan tombol ke state semula
-                btn.disabled = false;
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
-            }
+      try {
+        const response = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
         });
-    </script>
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.error || "Server tidak dapat memproses pertanyaan.");
+        }
+
+        outputText.textContent = data.answer || "Belum ada jawaban.";
+        renderSources(data.sources);
+      } catch (error) {
+        outputText.textContent =
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat memproses pertanyaan.";
+        renderSources([]);
+      } finally {
+        btn.disabled = false;
+        label.textContent = "Telusuri Turath";
+      }
+    });
+  </script>
 </body>
 </html>
