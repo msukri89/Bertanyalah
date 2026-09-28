@@ -1,0 +1,23 @@
+name: Test Turath MCP
+
+on:
+  push:
+    branches:
+      - "dev/turath-backend-foundation"
+  workflow_dispatch:
+
+jobs:
+  turath-connectivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test Turath MCP
+        run: node backend/test-turath.mjs
