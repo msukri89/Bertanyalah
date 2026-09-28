@@ -1,0 +1,33 @@
+name: Backend Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - dev/turath-backend-foundation
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check
+        run: |
+          node --check backend/turath-mcp-client.mjs
+          node --check backend/turath-service.mjs
+          node --check backend/test-turath.mjs
+          node --check backend/test-turath-search.mjs
+          node --check api/health.mjs
+          node --check api/ask.mjs
+
+      - name: Import check
+        run: node -e "import('./backend/turath-service.mjs').then(()=>console.log('turath-service import: PASS'))"
