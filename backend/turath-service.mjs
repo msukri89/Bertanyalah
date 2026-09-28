@@ -82,7 +82,7 @@ export async function searchTurath(queries, { maxPages = 5 } = {}) {
     for (const hit of hitsFrom(payload).slice(0, maxPages)) {
       const meta = hit?.meta || {};
       const bookId = Number(meta.book_id ?? hit.book_id);
-      const pageId = Number(meta.page_id);
+      const pageId = Number(meta.page_id ?? hit.page_id ?? hit.pageId);
       if (!Number.isInteger(bookId) || !Number.isInteger(pageId)) continue;
       const key = `${bookId}:${pageId}`;
       if (!sourceMap.has(key)) {
