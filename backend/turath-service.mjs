@@ -38,7 +38,8 @@ async function callTool(name, args, sessionId) {
   if (response.data?.result?.isError) {
     const message = (response.data.result.content || []).find(x => x?.type === "text")?.text || "Turath tool error";
     throw new Error(message);
-  }\n  return unwrap(response.data);
+  }
+  return unwrap(response.data);
 }
 
 async function openSession() {
