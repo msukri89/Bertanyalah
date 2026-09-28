@@ -53,6 +53,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  let stage = "validasi";
+
   try {
     const question = String(req.body?.question || "").trim();
 
@@ -73,6 +75,7 @@ export default async function handler(req, res) {
       `Pertanyaan: ${question}`
     ].join("\n");
 
+    stage = "Gemini membuat query Turath";
     const planned = await geminiJson(plannerPrompt, {
       type: "object",
       properties: {
@@ -98,6 +101,7 @@ export default async function handler(req, res) {
       });
     }
 
+    stage = "Turath mencari dan mengambil sumber";
     const sources = await searchTurath(queries);
 
     if (!sources.length) {
@@ -133,6 +137,7 @@ export default async function handler(req, res) {
       evidence
     ].join("\n");
 
+    stage = "Gemini menyusun jawaban dari bukti Turath";
     const generated = await geminiJson(answerPrompt, {
       type: "object",
       properties: {
@@ -164,7 +169,8 @@ export default async function handler(req, res) {
     console.error(error);
 
     return res.status(500).json({
-      error: "Terjadi kesalahan pada backend."
+      error: `Backend gagal pada tahap: ${stage}.`,
+      detail: error instanceof Error ? error.message : String(error)
     });
   }
 }
