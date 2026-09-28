@@ -129,10 +129,14 @@ export default async function handler(req, res) {
       "جلد الأضحية"
     ];
 
-    // Always include a small deterministic Turath query set.
-    // This prevents a weak Gemini-generated query from masking
-    // known-good Turath search terms.
-    const retrievalQueries = [...new Set([...queries, ...fallbackQueries])].slice(0, 8);
+    // For qurban questions, put two known-good Turath terms first.
+    // searchTurath intentionally limits one request to four queries,
+    // so appending fallbacks after Gemini queries could otherwise
+    // truncate the deterministic terms before they are searched.
+    const isQurban = /qurban|kurban|udhiyah|أضحية|أضحية|daging|kulit/i.test(question);
+    const retrievalQueries = isQurban
+      ? [...new Set([...fallbackQueries.slice(0, 2), ...queries])].slice(0, 4)
+      : queries;
     const sources = await searchTurath(retrievalQueries);
 
     if (!sources.length) {
