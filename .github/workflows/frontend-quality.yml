@@ -1,0 +1,38 @@
+name: Frontend Quality
+
+on:
+  push:
+    branches:
+      - dev/turath-backend-foundation
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
+          assert scripts, "No inline script found"
+          Path("/tmp/index-inline.js").write_text("\n\n".join(scripts), encoding="utf-8")
+          print("Extracted", len(scripts), "inline script block(s)")
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Ensure legacy webhook is absent
+        run: |
+          ! grep -R "hook.us2.make.com" -n . --exclude-dir=.git
